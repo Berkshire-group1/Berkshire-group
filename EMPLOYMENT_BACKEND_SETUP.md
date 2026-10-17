@@ -7,7 +7,7 @@ This branch contains the backend implementation, and the Supabase database migra
 - `supabase/functions/submit-employment/index.ts`: multipart validation, Turnstile verification, AES-GCM encryption of form fields, private ID uploads, with email notifications disabled.
 - `supabase/functions/admin-employment/index.ts`: admin-only list/detail/status endpoints and 60-second signed document URLs.
 - `supabase/functions/_shared/security.ts`: CORS, encryption, and Turnstile verification.
-- `admin.html`: dashboard scaffold. Project URL and public anon/publishable key are placeholders.
+- `admin.html`: administrator dashboard configured with the project's public URL and publishable key.
 - `supabase/.env.example`: names only; no secrets.
 - `.gitignore`: ignores local env files.
 
@@ -16,7 +16,7 @@ This branch contains the backend implementation, and the Supabase database migra
 2. STILL REQUIRED: create exactly one administrator account in Supabase Auth; set `ADMIN_EMAIL` to that account's email. Keep public sign-up disabled.
 3. STILL REQUIRED: create a Cloudflare Turnstile widget for `elizzzmorgann-beep.github.io`; put its secret in `TURNSTILE_SECRET_KEY` and its public site key in `employment.html`.
 4. Email notifications have been intentionally disabled; no Resend account, sender domain, or email API key is needed. Admins will review applications through the secure dashboard.
-5. STILL REQUIRED: generate a random 32-byte key locally, base64-encode it, and set it as `PII_ENCRYPTION_KEY`. Keep a secure backup; losing this key makes saved encrypted application details unrecoverable.
+5. User reports adding `PII_ENCRYPTION_KEY` in Supabase Secrets. Confirm it was the newly generated key (not the key pasted into chat) and keep a secure backup; losing it makes saved encrypted application details unrecoverable.
 6. Set Edge Function secrets: `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io`, `ADMIN_EMAIL`, `TURNSTILE_SECRET_KEY`, and `PII_ENCRYPTION_KEY`. The project supplies its own Supabase runtime variables.
 7. Set `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io` in Supabase Edge Function Secrets. GitHub Pages project paths (such as `/Berkshire-group/`) are not part of the browser origin. The existing visitor relay is unrelated to application submission.
 8. Configure the project URL and public anon/publishable key in `admin.html`. These two values are public; never put a service-role key in browser code.
@@ -35,7 +35,7 @@ Supabase's hosted Edge Function runtime provides `SUPABASE_URL`, `SUPABASE_ANON_
 7. STILL REQUIRED: test with synthetic data only: anonymous reads denied, unauthenticated admin requests denied, wrong admin email denied, invalid files rejected, and signed links expire. Email notifications are disabled by design.
 
 ## Sensitive data
-All form fields (including SSN/ID numbers) are encrypted with AES-GCM before database insertion. ID files are held in a private bucket; the dashboard function creates short-lived signed links only after checking the signed-in Supabase Auth email against `ADMIN_EMAIL`. Emails contain only a submission reference, never applicant details or ID files.
+All form fields (including SSN/ID numbers) are encrypted with AES-GCM before database insertion. ID files are held in a private bucket; the dashboard function creates short-lived signed links only after checking the signed-in Supabase Auth email against `ADMIN_EMAIL`. Email notifications are disabled; applications must be checked manually in the admin dashboard.
 
 Encryption is not a substitute for a retention/deletion policy or legal/privacy review. Confirm SSN and government ID collection is necessary before launch. Current endpoint checks file signatures for common formats and caps files at 5 MB each; add rate limiting, monitoring, and a reliable email retry mechanism before relying on this operationally.
 
