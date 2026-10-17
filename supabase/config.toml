@@ -1,0 +1,7 @@
+project_id = "berkshire-group"
+
+[functions.submit-employment]
+verify_jwt = false
+
+[functions.admin-employment]
+verify_jwt = true
