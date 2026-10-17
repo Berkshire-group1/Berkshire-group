@@ -1055,6 +1055,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
 
                     <form
+                        id="employment-application-form"
                         action="#"
                         method="POST"
                         enctype="multipart/form-data"
@@ -1828,6 +1829,21 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                         </div>
 
 
+                        <!-- BOT CHECK: configure the public Turnstile site key before launch -->
+                        <div class="employment-form-row">
+                            <div class="employment-form-cell">
+                                <label for="employment-website" style="position:absolute;left:-10000px;" aria-hidden="true">Leave this field empty</label>
+                                <input id="employment-website" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;height:1px;width:1px;">
+                            </div>
+                        </div>
+                        <div class="employment-form-row">
+                            <div class="employment-form-cell">
+                                <p>For your privacy, your application and uploaded ID documents are intended for authorized hiring staff only.</p>
+                                <div class="cf-turnstile" data-sitekey="REPLACE_WITH_CLOUDFLARE_TURNSTILE_SITE_KEY"></div>
+                                <p id="employment-submit-message" role="status" aria-live="polite"></p>
+                            </div>
+                        </div>
+
                         <!-- SUBMIT -->
                         <div class="employment-submit">
 
@@ -1888,6 +1904,51 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
             });
 
     </script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+(function () {
+  // Configure this placeholder only after creating the Supabase project.
+  // This URL is public; never place a service-role key in browser code.
+  var EMPLOYMENT_SUBMISSION_URL = "https://REPLACE_WITH_SUPABASE_PROJECT_REF.supabase.co/functions/v1/submit-employment";
+  var form = document.getElementById("employment-application-form");
+  if (!form) return;
+  var button = form.querySelector('button[type="submit"]');
+  var message = document.getElementById("employment-submit-message");
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    if (EMPLOYMENT_SUBMISSION_URL.indexOf("REPLACE_") !== -1) {
+      message.textContent = "Online applications are not configured yet. Please try again later.";
+      return;
+    }
+    if (!window.turnstile || !window.turnstile.getResponse()) {
+      message.textContent = "Please complete the verification check before submitting.";
+      return;
+    }
+    button.disabled = true;
+    message.textContent = "Submitting securely…";
+    try {
+      var response = await fetch(EMPLOYMENT_SUBMISSION_URL, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "omit",
+        cache: "no-store"
+      });
+      var result = await response.json().catch(function () { return {}; });
+      if (!response.ok) throw new Error(result.error || "Submission failed. Please try again later.");
+      message.textContent = "Thank you. Your application was received. Reference: " + result.application_id;
+      form.reset();
+      if (window.turnstile) window.turnstile.reset();
+    } catch (error) {
+      message.textContent = error.message || "We could not submit your application. Please try again later.";
+      if (window.turnstile) window.turnstile.reset();
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
 
 <!-- FOOTER -->
     <footer>
