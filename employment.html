@@ -1055,6 +1055,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
 
                     <form
+                        id="employment-application-form"
                         action="#"
                         method="POST"
                         enctype="multipart/form-data"
@@ -1259,20 +1260,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                             </div>
 
 
-                            <div class="employment-form-cell">
-
-                                <label>
-                                    Social Security No.:
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="social_security_number"
-                                    inputmode="numeric"
-                                    autocomplete="off"
-                                >
-
-                            </div>
+                            <!-- Social Security number intentionally not collected by this public application form. -->
 
                         </div>
 
@@ -1828,6 +1816,9 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                         </div>
 
 
+                        <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label>Leave empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+                        <div class="employment-form-row"><div class="employment-form-cell"><div id="employment-turnstile"></div><p id="employment-submit-status" role="status" aria-live="polite"></p></div></div>
+
                         <!-- SUBMIT -->
                         <div class="employment-submit">
 
@@ -1888,6 +1879,40 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
             });
 
     </script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script>
+(function(){
+ const endpoint="https://mkgtsivgmqicxedaewoj.supabase.co/functions/v1/employment-submit";
+ const publishableKey="REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY";
+ const turnstileSiteKey="REPLACE_WITH_TURNSTILE_SITE_KEY";
+ const form=document.getElementById("employment-application-form");
+ const status=document.getElementById("employment-submit-status");
+ if(!form||!status)return;
+ const button=form.querySelector('button[type="submit"]');
+ let widget=null;
+ const configured=()=>!publishableKey.includes("REPLACE_")&&!turnstileSiteKey.includes("REPLACE_");
+ const say=(text,error)=>{status.textContent=text;status.style.color=error?"#9c2222":"#17663b";};
+ function render(){if(configured()&&window.turnstile&&widget===null){widget=window.turnstile.render("#employment-turnstile",{sitekey:turnstileSiteKey,theme:"light"});}}
+ const poll=setInterval(()=>{if(window.turnstile){clearInterval(poll);render();}},250);
+ form.addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!configured()){say("Online applications are not configured yet. Please try again later.",true);return;}
+  render();
+  const captcha=form.querySelector('[name="cf-turnstile-response"]');
+  if(!captcha||!captcha.value){say("Please complete the security verification.",true);return;}
+  button.disabled=true;say("Submitting securely…",false);
+  try{
+   const res=await fetch(endpoint,{method:"POST",headers:{apikey:publishableKey},body:new FormData(form)});
+   const data=await res.json().catch(()=>({}));
+   if(!res.ok||!data.ok)throw new Error(data.error||"Submission failed. Please try again.");
+   form.reset();if(window.turnstile&&widget!==null)window.turnstile.reset(widget);
+   say(data.notificationSent===false?"Application received. Email notification is delayed; please do not submit again.":"Application submitted successfully.",false);
+  }catch(err){say(err&&err.message?err.message:"Submission failed. Please try again.",true);if(window.turnstile&&widget!==null)window.turnstile.reset(widget);}
+  finally{button.disabled=false;}
+ });
+})();
+</script>
 
 <!-- FOOTER -->
     <footer>
