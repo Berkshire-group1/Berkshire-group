@@ -12,13 +12,13 @@ This branch contains the backend implementation, and the Supabase database migra
 - `.gitignore`: ignores local env files.
 
 ## Configuration blockers
-1. Create a Supabase project and obtain its project URL, project ref, and public anon/publishable key.
-2. Create exactly one administrator account in Supabase Auth; set `ADMIN_EMAIL` to that account's email. Keep public sign-up disabled.
-3. Create a Cloudflare Turnstile widget for `https://elizzzmorgann-beep.github.io`; put its secret in `TURNSTILE_SECRET_KEY` and later add its public site key to the form.
-4. Verify a sender domain/address in Resend and set `EMAIL_FROM` to an allowed sender. `NOTIFICATION_EMAIL` is already set conceptually to `elizzzmorgann@gmail.com`.
-5. Generate a random 32-byte key locally, base64-encode it, and set it as `PII_ENCRYPTION_KEY`. Keep a secure backup; losing this key makes saved encrypted application details unrecoverable.
-6. Set Edge Function secrets: `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io`, `NOTIFICATION_EMAIL=elizzzmorgann@gmail.com`, `ADMIN_EMAIL`, `EMAIL_FROM`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, and `PII_ENCRYPTION_KEY`.
-7. Use `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io` in Supabase Edge Function Secrets. GitHub Pages project paths (such as `/Berkshire-group/`) are not part of the browser origin. The existing visitor relay is unrelated to application submission.
+1. Supabase project created: `mkgtsivgmqicxedaewoj` (US East). Project URL: `https://mkgtsivgmqicxedaewoj.supabase.co`. A public publishable key is configured in the branch's frontend files.
+2. STILL REQUIRED: create exactly one administrator account in Supabase Auth; set `ADMIN_EMAIL` to that account's email. Keep public sign-up disabled.
+3. STILL REQUIRED: create a Cloudflare Turnstile widget for `elizzzmorgann-beep.github.io`; put its secret in `TURNSTILE_SECRET_KEY` and its public site key in `employment.html`.
+4. STILL REQUIRED: verify a sender domain/address in Resend and set `EMAIL_FROM` to an allowed sender. `NOTIFICATION_EMAIL` should be `elizzzmorgann@gmail.com`.
+5. STILL REQUIRED: generate a random 32-byte key locally, base64-encode it, and set it as `PII_ENCRYPTION_KEY`. Keep a secure backup; losing this key makes saved encrypted application details unrecoverable.
+6. STILL REQUIRED: set Edge Function secrets: `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io`, `NOTIFICATION_EMAIL=elizzzmorgann@gmail.com`, `ADMIN_EMAIL`, `EMAIL_FROM`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, and `PII_ENCRYPTION_KEY`.
+7. Set `ALLOWED_ORIGIN=https://elizzzmorgann-beep.github.io` in Supabase Edge Function Secrets. GitHub Pages project paths (such as `/Berkshire-group/`) are not part of the browser origin. The existing visitor relay is unrelated to application submission.
 8. Configure the project URL and public anon/publishable key in `admin.html`. These two values are public; never put a service-role key in browser code.
 
 Generate the encryption key locally, e.g. `openssl rand -base64 32`. Copy it directly to Supabase Edge Function Secrets; do not paste it in chat, a PR, or a committed file.
@@ -26,14 +26,13 @@ Generate the encryption key locally, e.g. `openssl rand -base64 32`. Copy it dir
 Supabase's hosted Edge Function runtime provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in standard deployments. Never expose the service-role key.
 
 ## Deployment sequence
-1. Install Supabase CLI and log in locally.
-2. Link the checkout to the project using its project ref.
-3. Review and apply the migration with `supabase db push`.
-4. Set the Edge Function secrets above.
-5. Deploy `submit-employment` and `admin-employment`.
-6. Configure the dashboard's public project URL/key and create the single admin account. Disable public sign-up.
-7. Confirm `employment.html` posts `FormData` to `/functions/v1/submit-employment`; configure its Turnstile site key and test the honeypot. Only show success after a successful response.
-8. Test with synthetic data only: anonymous reads denied, unauthenticated admin requests denied, wrong admin email denied, invalid files rejected, signed links expire, and saved applications remain available if email delivery fails.
+1. DONE: created the Supabase project.
+2. DONE: applied migration `employment_applications`; `public.employment_applications` has RLS enabled and no public/authenticated policies, and the `employment-id-documents` bucket is private.
+3. DONE: deployed `submit-employment` (public endpoint with origin, Turnstile and payload validation) and `admin-employment` (gateway JWT verification enabled, plus admin-email authorization).
+4. STILL REQUIRED: set the Edge Function secrets above. The available connected controls here do not expose a secrets-write operation, so add these through the Supabase Dashboard > Edge Functions > Secrets.
+5. DONE: the branch's `employment.html` and `admin.html` now contain the project URL and public publishable key; these are not privileged secrets.
+6. STILL REQUIRED: configure the Turnstile site key and create the one admin Auth account. Disable public sign-up.
+7. STILL REQUIRED: configure Resend and test with synthetic data only: anonymous reads denied, unauthenticated admin requests denied, wrong admin email denied, invalid files rejected, signed links expire, and saved applications remain available if email delivery fails.
 
 ## Sensitive data
 All form fields (including SSN/ID numbers) are encrypted with AES-GCM before database insertion. ID files are held in a private bucket; the dashboard function creates short-lived signed links only after checking the signed-in Supabase Auth email against `ADMIN_EMAIL`. Emails contain only a submission reference, never applicant details or ID files.
@@ -42,7 +41,7 @@ Encryption is not a substitute for a retention/deletion policy or legal/privacy 
 
 ## Not production-ready yet
 - The backend branch modifies `employment.html` to call the configured submission endpoint, but this branch has not been merged into `main` or tested live. The current published `main` version still contains sensitive SSN/ID fields with a placeholder form action; do not collect or submit real applicant identity information until the secure backend is deployed and verified.
-- Project, migration, and functions have not been deployed or tested against a real Supabase instance.
-- Resend sender/API key, Turnstile widget/secret, admin Auth account, and encryption key remain unconfigured. The project URL and public publishable key are filled into the backend branch.
+- The project, migration, and functions are deployed, but a live end-to-end application test has not been completed because required secrets and external providers are not configured.
+- Resend sender/API key, Turnstile widget/secret/site key, admin Auth account, and encryption key remain unconfigured. The project URL and public publishable key are filled into the backend branch.
 - No automated retry queue or dedicated rate-limit layer is included.
-Do not merge or collect real applicant data until all blockers are resolved and security checks pass.
+Do not merge or collect real applicant data until all blockers are resolved and security checks pass. Project status and function deployment were verified on 2026-10-17; security advisor currently reports only the expected informational warning that the applications table has RLS enabled with no policies.
