@@ -35,9 +35,7 @@ Deno.serve(async (request) => {
   const projectUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const notifyEmail = Deno.env.get("NOTIFICATION_EMAIL");
-  const resendKey = Deno.env.get("RESEND_API_KEY");
-  const emailFrom = Deno.env.get("EMAIL_FROM");
-  if (!projectUrl || !serviceKey || !notifyEmail || !resendKey || !emailFrom ||
+  if (!projectUrl || !serviceKey || !notifyEmail ||
       !Deno.env.get("PII_ENCRYPTION_KEY") || !Deno.env.get("TURNSTILE_SECRET_KEY")) {
     return jsonResponse({error:"Application submission is not configured yet"},503,origin);
   }
@@ -94,7 +92,7 @@ Deno.serve(async (request) => {
     }
     const {error} = await supabase.from("employment_applications").insert({
       id, payload_ciphertext:await encryptPayload(payload), front_document_path:uploaded[0],
-      back_document_path:uploaded[1], status:"new", notification_status:"pending"
+      back_document_path:uploaded[1], status:"new", notification_status:"disabled"
     });
     if (error) throw new Error("application_save_failed");
   } catch {
@@ -102,24 +100,6 @@ Deno.serve(async (request) => {
     return jsonResponse({error:"We could not safely save your application. Please try again later."},500,origin);
   }
 
-  let notificationStatus = "failed";
-  let errorCode: string | null = null;
-  try {
-    const response = await fetch("https://api.resend.com/emails",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+resendKey,"Content-Type":"application/json"},
-      body:JSON.stringify({
-        from:emailFrom,to:[notifyEmail],subject:"New Berkshire Group employment application",
-        text:"A new employment application was submitted. Reference: "+id+
-          "\nSign in to the secure Berkshire Group application dashboard to review it. No applicant details or ID documents are included in this email."
-      })
-    });
-    if (response.ok) notificationStatus = "sent";
-    else errorCode = "email_provider_error";
-  } catch { errorCode = "email_provider_unreachable"; }
-  await supabase.from("employment_applications").update({
-    notification_status:notificationStatus,notification_attempted_at:new Date().toISOString(),
-    notification_error_code:errorCode
-  }).eq("id",id);
-  return jsonResponse({message:"Application received",application_id:id,notification_status:notificationStatus},201,origin);
+  // Email notifications are intentionally disabled; admins review submissions in the secure dashboard.
+  return jsonResponse({message:"Application received",application_id:id,notification_status:"disabled"},201,origin);
 });
