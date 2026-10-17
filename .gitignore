@@ -1,0 +1,10 @@
+# Local secrets and generated Supabase state
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/functions/.env
+supabase/functions/**/.env
+.DS_Store
+Thumbs.db
+.vscode/
