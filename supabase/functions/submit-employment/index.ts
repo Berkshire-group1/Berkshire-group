@@ -34,8 +34,7 @@ Deno.serve(async (request) => {
 
   const projectUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const notifyEmail = Deno.env.get("NOTIFICATION_EMAIL");
-  if (!projectUrl || !serviceKey || !notifyEmail ||
+  if (!projectUrl || !serviceKey ||
       !Deno.env.get("PII_ENCRYPTION_KEY") || !Deno.env.get("TURNSTILE_SECRET_KEY")) {
     return jsonResponse({error:"Application submission is not configured yet"},503,origin);
   }
