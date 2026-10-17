@@ -1,6 +1,6 @@
 # Employment application backend setup
 
-This branch contains a backend scaffold only; it is not live or production-ready. The branch version of `employment.html` has a configurable submission handler, but the Supabase endpoint, public key, and Turnstile site key are placeholders. No Supabase project has been created or deployed yet. The published GitHub Pages URL is `https://elizzzmorgann-beep.github.io/Berkshire-group/`; its browser origin is `https://elizzzmorgann-beep.github.io`.
+This branch contains the backend implementation, and the Supabase database migration plus both Edge Functions have now been deployed. It is still NOT production-ready: Edge Function secrets, the Turnstile widget/site key, the Resend sender, and the single admin Auth user still need configuration. The project URL and publishable key are filled into the branch's form/dashboard files; do not merge or collect real applications until the remaining checks pass. The published GitHub Pages URL is `https://elizzzmorgann-beep.github.io/Berkshire-group/`; its browser origin is `https://elizzzmorgann-beep.github.io`.
 
 ## Included
 - `supabase/migrations/202610170001_employment_applications.sql`: RLS-enabled applications table and private ID-document bucket.
@@ -32,7 +32,7 @@ Supabase's hosted Edge Function runtime provides `SUPABASE_URL`, `SUPABASE_ANON_
 4. Set the Edge Function secrets above.
 5. Deploy `submit-employment` and `admin-employment`.
 6. Configure the dashboard's public project URL/key and create the single admin account. Disable public sign-up.
-7. Wire `employment.html` to POST `FormData` to `/functions/v1/submit-employment`; add the Turnstile widget/site key and a honeypot input. Only show success after a successful response.
+7. Confirm `employment.html` posts `FormData` to `/functions/v1/submit-employment`; configure its Turnstile site key and test the honeypot. Only show success after a successful response.
 8. Test with synthetic data only: anonymous reads denied, unauthenticated admin requests denied, wrong admin email denied, invalid files rejected, signed links expire, and saved applications remain available if email delivery fails.
 
 ## Sensitive data
@@ -43,6 +43,6 @@ Encryption is not a substitute for a retention/deletion policy or legal/privacy 
 ## Not production-ready yet
 - The backend branch modifies `employment.html` to call the configured submission endpoint, but this branch has not been merged into `main` or tested live. The current published `main` version still contains sensitive SSN/ID fields with a placeholder form action; do not collect or submit real applicant identity information until the secure backend is deployed and verified.
 - Project, migration, and functions have not been deployed or tested against a real Supabase instance.
-- Resend sender/API key, Turnstile widget/secret, admin Auth account, encryption key, and dashboard client values remain unconfigured.
+- Resend sender/API key, Turnstile widget/secret, admin Auth account, and encryption key remain unconfigured. The project URL and public publishable key are filled into the backend branch.
 - No automated retry queue or dedicated rate-limit layer is included.
 Do not merge or collect real applicant data until all blockers are resolved and security checks pass.
