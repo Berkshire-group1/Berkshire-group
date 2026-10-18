@@ -1,5 +1,19 @@
-<!-- Hidden anti-bot field -->
-<div style="position:absolute;left:-9999px;" aria-hidden="true">
+<!-- Hidden anti-bot field: visitors should not see this -->
+<div
+    class="employment-honeypot"
+    aria-hidden="true"
+    style="
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    "
+>
     <label for="employment-website">Website</label>
     <input
         id="employment-website"
@@ -10,7 +24,18 @@
     >
 </div>
 
-<!-- Cloudflare Turnstile verification -->
-<div class="cf-turnstile"
-     data-sitekey="0x4AAAAAAFaXiG4imp6sIrZx">
+<!-- Cloudflare verification -->
+<div class="employment-form-row">
+    <div class="employment-form-cell">
+        <div
+            class="cf-turnstile"
+            data-sitekey="0x4AAAAAAFaXiG4imp6sIrZx"
+        ></div>
+
+        <p
+            id="employment-submit-message"
+            role="status"
+            aria-live="polite"
+        ></p>
+    </div>
 </div>
