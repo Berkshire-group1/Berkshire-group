@@ -1130,7 +1130,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                 }
             });
 
-            function applyFilter(filter) {
+            function applyFilter(filter, shouldScroll) {
                 filterLinks.forEach(function (link) {
                     var active = link.dataset.filter === filter;
                     link.classList.toggle('active', active);
@@ -1145,7 +1145,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                     if (showCard && results && card.parentElement !== results) results.appendChild(card);
                 });
 
-                if (results) {
+                if (shouldScroll && results) {
                     results.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }
@@ -1153,11 +1153,11 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
             filterLinks.forEach(function (link) {
                 link.addEventListener('click', function (event) {
                     event.preventDefault();
-                    applyFilter((this.dataset.filter || 'all').toLowerCase());
+                    applyFilter((this.dataset.filter || 'all').toLowerCase(), true);
                 });
             });
 
-            applyFilter('all');
+            applyFilter('all', false);
         })();
     </script>
 
