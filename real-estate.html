@@ -1113,9 +1113,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
             var cards = Array.prototype.slice.call(document.querySelectorAll('.gallery-card[data-category]'));
             var results = document.getElementById('property-filter-results');
 
-            // Keep the original pictures and URLs, but ensure each one is rendered
-            // as an image element. Move matching cards into the gallery directly
-            // below "Availability and prices can change."
+            // Render the existing image URLs as regular images, without replacing them.
             cards.forEach(function (card) {
                 var background = card.style.backgroundImage;
                 var match = background && background.match(/url\(["']?(.*?)["']?\)/i);
@@ -1132,21 +1130,27 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
             function applyFilter(filter, shouldScroll) {
                 filterLinks.forEach(function (link) {
-                    var active = link.dataset.filter === filter;
+                    var active = (link.dataset.filter || 'all').toLowerCase() === filter;
                     link.classList.toggle('active', active);
                     link.setAttribute('aria-pressed', active ? 'true' : 'false');
                 });
 
+                // Always restore the original order and show every card for All.
+                // For a category, show only cards tagged with that exact category.
                 cards.forEach(function (card) {
-                    var categories = (card.dataset.category || '').toLowerCase().split(/\s+/);
+                    var categories = (card.dataset.category || '').toLowerCase().split(/\s+/).filter(Boolean);
                     var showCard = filter === 'all' || categories.includes(filter);
                     card.classList.toggle('property-hidden', !showCard);
                     card.setAttribute('aria-hidden', showCard ? 'false' : 'true');
-                    if (showCard && results && card.parentElement !== results) results.appendChild(card);
                 });
 
-                if (shouldScroll && results) {
-                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (results) {
+                    cards.forEach(function (card) {
+                        results.appendChild(card);
+                    });
+                    if (shouldScroll) {
+                        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 }
             }
 
