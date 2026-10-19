@@ -1035,7 +1035,7 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                 
             </div>
 
-            <div class="ex-gallery-grid">
+            <div class="ex-gallery-grid" id="property-filter-results" aria-live="polite">
 
                 <div class="gallery-card" data-category="office" style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Willis_Tower.jpg');">
                     <div class="card-overlay"><div>
@@ -1110,30 +1110,31 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
     <script>
         (function () {
             var filterLinks = document.querySelectorAll('.property-filter-link');
-            var cards = document.querySelectorAll('.gallery-card[data-category]');
+            var cards = Array.prototype.slice.call(document.querySelectorAll('.gallery-card[data-category]'));
+            var results = document.getElementById('property-filter-results');
 
-            // Use regular image elements for the existing gallery URLs so browsers
-            // load the original pictures reliably. The image URLs are not changed.
+            // Keep the original pictures and URLs, but ensure each one is rendered
+            // as an image element. Move matching cards into the gallery directly
+            // below "Availability and prices can change."
             cards.forEach(function (card) {
                 var background = card.style.backgroundImage;
                 var match = background && background.match(/url\(["']?(.*?)["']?\)/i);
-                if (!match || card.querySelector('.gallery-card-image')) return;
-
-                var image = document.createElement('img');
-                image.className = 'gallery-card-image';
-                image.src = match[1];
-                image.alt = card.querySelector('h5') ? card.querySelector('h5').textContent.trim() : 'Property photograph';
-                image.loading = 'lazy';
-                image.decoding = 'async';
-                card.insertBefore(image, card.firstChild);
+                if (match && !card.querySelector('.gallery-card-image')) {
+                    var image = document.createElement('img');
+                    image.className = 'gallery-card-image';
+                    image.src = match[1];
+                    image.alt = card.querySelector('h5') ? card.querySelector('h5').textContent.trim() : 'Property photograph';
+                    image.loading = 'lazy';
+                    image.decoding = 'async';
+                    card.insertBefore(image, card.firstChild);
+                }
             });
 
             function applyFilter(filter) {
                 filterLinks.forEach(function (link) {
                     var active = link.dataset.filter === filter;
                     link.classList.toggle('active', active);
-                    if (active) link.setAttribute('aria-pressed', 'true');
-                    else link.setAttribute('aria-pressed', 'false');
+                    link.setAttribute('aria-pressed', active ? 'true' : 'false');
                 });
 
                 cards.forEach(function (card) {
@@ -1141,7 +1142,12 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
                     var showCard = filter === 'all' || categories.includes(filter);
                     card.classList.toggle('property-hidden', !showCard);
                     card.setAttribute('aria-hidden', showCard ? 'false' : 'true');
+                    if (showCard && results && card.parentElement !== results) results.appendChild(card);
                 });
+
+                if (results) {
+                    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
 
             filterLinks.forEach(function (link) {
